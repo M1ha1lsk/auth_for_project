@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    container_name: auth_db
+    restart: always
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_password
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: auth_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://auth_user:auth_password@db:5432/auth_db
+    command: >
+      sh -c "
+      until pg_isready -h db -p 5432; do
+      echo 'Waiting for PostgreSQL to start...';
+      sleep 3;
+      done;
+      alembic upgrade head;
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+volumes:
+  postgres_data:
