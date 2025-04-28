@@ -9,9 +9,9 @@
    ```
 3. **Логин и пароль админа:**  
    ```
-  admin
+   admin
    ```
    ```
-  admin_pwd
+   admin_pwd
    ```
 
