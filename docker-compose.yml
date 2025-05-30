@@ -38,3 +38,8 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  default:
+    external:
+      name: my_shared_net

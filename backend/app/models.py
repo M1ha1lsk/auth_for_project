@@ -11,16 +11,7 @@ class User(Base):
     user_password = Column(String(255), nullable=False)
     user_role = Column(String(255), nullable=False)
 
-    visits = relationship("Visit", back_populates="user")
     sessions = relationship("Session", back_populates="user")
-
-class Visit(Base):
-    __tablename__ = "visits"
-    visit_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    visit_time = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-
-    user = relationship("User", back_populates="visits")
 
 class Session(Base):
     __tablename__ = "sessions"

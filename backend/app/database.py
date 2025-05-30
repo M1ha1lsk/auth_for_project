@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.orm import Session
 from datetime import datetime
+from typing import Optional
 from passlib.context import CryptContext
 from passlib.context import CryptContext
 from . import models
@@ -35,13 +36,9 @@ def init_db(db: Session):
 def get_user_by_login(db: Session, user_login: str):
     return db.query(models.User).filter(models.User.user_login == user_login).first()
 
-def get_session_by_token(db: Session, session_token: str):
-    return db.query(models.Session).filter(models.Session.session_token == session_token).first()
-
-def register_visit(db: Session, user_id: int):
-    visit = models.Visit(user_id=user_id, visit_time=datetime.utcnow())
-    db.add(visit)
-    db.commit()
+def get_session_by_token(db: Session, session_token: str) -> Optional[object]:
+    from .models import Session as UserSession
+    return db.query(UserSession).filter(UserSession.session_token == session_token).first()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

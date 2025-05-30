@@ -82,9 +82,10 @@ async def check_session(request: Request, db: Session = Depends(get_db)):
     if not session or session.session_end:
         raise HTTPException(status_code=400, detail="Session expired")
 
-    database.register_visit(db, session.user_id)
-
-    return {"message": "Session is active"}
+    return {
+        "message": "Session is active",
+        "user_id": session.user_id
+    }
 
 @app.post("/logout/")
 async def logout(response: Response, request: Request, db: Session = Depends(get_db)):
@@ -117,32 +118,3 @@ async def get_user_role(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     return {"role": user.user_role}
-
-@app.get("/api/get_visits")
-async def get_visits(request: Request, user_id: int = None, db: Session = Depends(get_db)):
-    session_token = request.cookies.get("session_token")
-    if not session_token:
-        raise HTTPException(status_code=401, detail="Не авторизован")
-
-    session = db.query(UserSession).filter(UserSession.session_token == session_token).first()
-    if not session:
-        raise HTTPException(status_code=401, detail="Сессия недействительна")
-
-    user = db.query(User).filter(User.user_id == session.user_id).first()
-    if not user or user.user_role != "admin":
-        raise HTTPException(status_code=403, detail="У вас недостаточно мощи")
-
-    # Если передан user_id — фильтруем по нему, иначе выводим всех
-    query = db.query(UserSession, User.user_login).join(User, User.user_id == UserSession.user_id)
-    if user_id:
-        query = query.filter(UserSession.user_id == user_id)
-
-    visits = query.all()
-    return [
-        {
-            "user_id": visit[0].user_id,
-            "user_login": visit.user_login,
-            "session_start": visit[0].session_start.isoformat(),
-        }
-        for visit in visits
-    ]
