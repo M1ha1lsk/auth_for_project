@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from kafka import KafkaProducer
 from passlib.context import CryptContext
 from .models import User, Session as UserSession
+from typing import Literal
 from . import models, database
 from .database import get_db
 from pydantic import BaseModel
@@ -30,6 +31,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class RegisterUserRequest(BaseModel):
     user_login: str
     user_password: str
+    user_role: Literal['admin', 'seller', 'customer']
 
 class LoginUserRequest(BaseModel):
     user_login: str
@@ -43,7 +45,10 @@ async def startup():
 @app.post("/register/")
 async def register_user(request: RegisterUserRequest, db: Session = Depends(get_db)):
     hashed_password = pwd_context.hash(request.user_password)
-    new_user = User(user_login=request.user_login, user_password=hashed_password, user_role="user")
+    expected_role = ['admin', 'seller', 'customer']
+    new_user = User(user_login=request.user_login, user_password=hashed_password, user_role=request.user_role)
+    if request.user_role not in expected_role:
+        raise HTTPException(status_code=400, detail="Invalid role. Itmust be one of 'admin', 'seller' or 'customer'")
 
     db.add(new_user)
     db.commit()
